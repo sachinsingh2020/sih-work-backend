@@ -2,57 +2,45 @@ import express from 'express';
 import { config } from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import ErrorMiddleware from './middlewares/Error.js';
 import morgan from 'morgan';
+import ErrorMiddleware from './middlewares/Error.js';
 
+// Load environment variables
 config({
-    path: "./config/config.env",
-})
+    path: './config/config.env',
+});
 
 const app = express();
 
 // Middleware
 app.use(morgan('dev'));
 app.use(express.json());
-app.use(
-    express.urlencoded({
-        extended: true,
-    })
-);
-
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Setup CORS to handle multiple origins
-const allowedOrigins = [process.env.FRONTEND_URL, "http://localhost:3000"];
+// Setup CORS to allow all origins
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (e.g., mobile apps, curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    origin: '*', // Allow all origins
+    credentials: false, // Disable credentials for public APIs
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
 }));
 
-// Importing and using routes 
-import agProdCont from "./routes/agricultureProductRoutes.js"
-import waterFootPrintCont from "./routes/waterFootPrintRoutes.js"
-import cropTypeCont from "./routes/cropTypeRoutes.js"
+// Importing routes
+import agProdCont from './routes/agricultureProductRoutes.js';
+import waterFootPrintCont from './routes/waterFootPrintRoutes.js';
+import cropTypeCont from './routes/cropTypeRoutes.js';
 
+// Use routes
 app.use('/api/', agProdCont);
 app.use('/api/', waterFootPrintCont);
 app.use('/api/', cropTypeCont);
 
-
-// Printing server is working 
+// Default route
 app.get('/', (req, res) => {
-    res.send('Server is working');
-})
+    res.send('Server is working and publicly accessible!');
+});
+
+// Error handling middleware
+app.use(ErrorMiddleware);
 
 export default app;
-
-app.use(ErrorMiddleware);
